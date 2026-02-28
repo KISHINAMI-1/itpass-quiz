@@ -37,142 +37,115 @@
   </div>
 
 <script>
-  // ====== 設定 ======
-  const CSV_PATH = './ITpassport.csv';
+const CSV_PATH = './ITpassport.csv';
 
-  // ====== 状態 ======
-  let questions = [];
-  let current = null;
-  let locked = false;
-  let correctCount = 0;
-  let totalCount = 0;
+let questions = [];
+let current = null;
+let locked = false;
+let correctCount = 0;
+let totalCount = 0;
 
-  // ====== CSVパーサ（ダブルクォート対応） ======
-  function parseCSV(text) {
-    const rows = [];
-    let row = [], cell = '', inQuotes = false;
+function parseCSV(text) {
+  const rows = [];
+  let row = [], cell = '', inQuotes = false;
 
-    for (let i = 0; i < text.length; i++) {
-      const c = text[i];
-      const next = text[i + 1];
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    const next = text[i + 1];
 
-      if (c === '"') {
-        if (inQuotes && next === '"') { cell += '"'; i++; }
-        else { inQuotes = !inQuotes; }
-      } else if (c === ',' && !inQuotes) {
-        row.push(cell); cell = '';
-      } else if ((c === '\n' || c === '\r') && !inQuotes) {
-        if (c === '\r' && next === '\n') i++;
-        row.push(cell); cell = '';
-        // 空行除外
-        if (row.some(v => v.trim() !== '')) rows.push(row);
-        row = [];
-      } else {
-        cell += c;
-      }
+    if (c === '"') {
+      if (inQuotes && next === '"') { cell += '"'; i++; }
+      else { inQuotes = !inQuotes; }
+    } else if (c === ',' && !inQuotes) {
+      row.push(cell); cell = '';
+    } else if ((c === '\n' || c === '\r') && !inQuotes) {
+      if (c === '\r' && next === '\n') i++;
+      row.push(cell); cell = '';
+      if (row.some(v => v.trim() !== '')) rows.push(row);
+      row = [];
+    } else {
+      cell += c;
     }
-    // last
-    if (cell.length || row.length) { row.push(cell); rows.push(row); }
-    return rows;
   }
+  if (cell.length || row.length) { row.push(cell); rows.push(row); }
+  return rows;
+}
 
-  function normalizeHeader(h) {
-    return (h || '').trim().replace(/\s+/g, '');
-  }
+function normalizeHeader(h) {
+  return (h || '').trim();
+}
 
-  function toInt(s) {
-    const n = parseInt(String(s).trim(), 10);
-    return Number.isFinite(n) ? n : null;
-  }
+async function loadQuestions() {
+  const res = await fetch(CSV_PATH, { cache: 'no-store' });
+  const text = await res.text();
+  const rows = parseCSV(text);
 
-  async function loadQuestions() {
-    document.getElementById('question').textContent = 'CSVを読み込み中…';
-    document.getElementById('result').textContent = '';
-    locked = false;
+  const header = rows[0].map(normalizeHeader);
 
-    const res = await fetch(CSV_PATH, { cache: 'no-store' });
-    if (!res.ok) throw new Error('CSVを取得できませんでした: ' + res.status);
-    const text = await res.text();
+  const idx = {
+    id: header.indexOf('問題ID'),
+    field: header.indexOf('分野'),
+    q: header.indexOf('問題文'),
+    a1: header.indexOf('選択肢1'),
+    a2: header.indexOf('選択肢2'),
+    a3: header.indexOf('選択肢3'),
+    a4: header.indexOf('選択肢4'),
+    ans: header.indexOf('正解'),
+    exp: header.indexOf('解説')
+  };
 
-    const rows = parseCSV(text);
-    if (rows.length < 2) throw new Error('CSVにデータがありません');
+  questions = rows.slice(1).map(r => ({
+    id: r[idx.id],
+    field: r[idx.field],
+    text: r[idx.q],
+    choices: [r[idx.a1], r[idx.a2], r[idx.a3], r[idx.a4]],
+    answer: parseInt(r[idx.ans]),
+    explanation: r[idx.exp] || ""
+  }));
 
-    const header = rows[0].map(normalizeHeader);
+  showRandomQuestion();
+}
 
-    // 期待ヘッダ（あなたの列名に合わせる）
-    const idx = {
-      id: header.indexOf('問題ID'),
-      field: header.indexOf('分野'),
-      q: header.indexOf('問題文'),
-      a1: header.indexOf('選択肢1'),
-      a2: header.indexOf('選択肢2'),
-      a3: header.indexOf('選択肢3'),
-      a4: header.indexOf('選択肢4'),
-      ans: header.indexOf('正解'),
-    };
+function showRandomQuestion() {
+  locked = false;
+  document.getElementById('result').textContent = '';
+  current = questions[Math.floor(Math.random() * questions.length)];
 
-    for (const [k,v] of Object.entries(idx)) {
-      if (v === -1) throw new Error(`ヘッダ「${k}」に必要な列が見つかりません（列名を確認してください）`);
-    }
+  document.getElementById('field').textContent = current.field;
+  document.getElementById('qid').textContent = current.id;
+  document.getElementById('question').textContent = current.text;
 
-    questions = rows.slice(1).map(r => ({
-      id: (r[idx.id] ?? '').trim(),
-      field: (r[idx.field] ?? '').trim(),
-      text: (r[idx.q] ?? '').trim(),
-      choices: [
-        (r[idx.a1] ?? '').trim(),
-        (r[idx.a2] ?? '').trim(),
-        (r[idx.a3] ?? '').trim(),
-        (r[idx.a4] ?? '').trim(),
-      ],
-      answer: toInt(r[idx.ans]),
-    })).filter(q => q.text && q.choices.every(c => c) && q.answer >= 1 && q.answer <= 4);
+  const choicesDiv = document.getElementById('choices');
+  choicesDiv.innerHTML = '';
 
-    if (questions.length === 0) throw new Error('有効な問題が0件です（空欄や正解の値を確認）');
-
-    showRandomQuestion();
-  }
-
-  function showRandomQuestion() {
-    locked = false;
-    document.getElementById('result').textContent = '';
-    current = questions[Math.floor(Math.random() * questions.length)];
-
-    document.getElementById('field').textContent = current.field || '-';
-    document.getElementById('qid').textContent = current.id || '-';
-    document.getElementById('question').textContent = current.text;
-
-    const choicesDiv = document.getElementById('choices');
-    choicesDiv.innerHTML = '';
-
-    current.choices.forEach((c, i) => {
-      const btn = document.createElement('button');
-      btn.textContent = `${i+1}. ${c}`;
-      btn.onclick = () => judge(i+1);
-      choicesDiv.appendChild(btn);
-    });
-  }
-
-  function judge(selected) {
-    if (locked) return;
-    locked = true;
-    totalCount++;
-    const ok = (selected === current.answer);
-    if (ok) correctCount++;
-
-    document.getElementById('ok').textContent = String(correctCount);
-    document.getElementById('total').textContent = String(totalCount);
-
-    document.getElementById('result').textContent =
-      ok ? '✅ 正解！' : `❌ 不正解（正解は ${current.answer}）`;
-  }
-
-  document.getElementById('nextBtn').addEventListener('click', showRandomQuestion);
-  document.getElementById('reloadBtn').addEventListener('click', () => loadQuestions().catch(e => alert(e.message)));
-
-  loadQuestions().catch(e => {
-    document.getElementById('question').textContent = 'エラー: ' + e.message;
+  current.choices.forEach((c, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = `${i+1}. ${c}`;
+    btn.onclick = () => judge(i+1);
+    choicesDiv.appendChild(btn);
   });
+}
+
+function judge(selected) {
+  if (locked) return;
+  locked = true;
+  totalCount++;
+  const ok = (selected === current.answer);
+  if (ok) correctCount++;
+
+  document.getElementById('ok').textContent = correctCount;
+  document.getElementById('total').textContent = totalCount;
+
+  document.getElementById('result').innerHTML =
+    ok
+      ? `✅ 正解！<br><br>📘 解説：${current.explanation}`
+      : `❌ 不正解（正解は ${current.answer}）<br><br>📘 解説：${current.explanation}`;
+}
+
+document.getElementById('nextBtn').addEventListener('click', showRandomQuestion);
+document.getElementById('reloadBtn').addEventListener('click', loadQuestions);
+
+loadQuestions();
 </script>
 </body>
 </html>
