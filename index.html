@@ -40,6 +40,9 @@
 const CSV_PATH = './ITpassport.csv';
 
 let questions = [];
+let deck = [];
+let deckIndex = 0;
+
 let current = null;
 let locked = false;
 let correctCount = 0;
@@ -71,14 +74,28 @@ function parseCSV(text) {
   return rows;
 }
 
+function shuffle(arr) {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 function normalizeHeader(h) {
   return (h || '').trim();
 }
 
 async function loadQuestions() {
+  document.getElementById('question').textContent = 'CSVを読み込み中…';
+  document.getElementById('result').textContent = '';
+
   const res = await fetch(CSV_PATH, { cache: 'no-store' });
+  if (!res.ok) throw new Error('CSVを取得できませんでした: ' + res.status);
+
   const text = await res.text();
   const rows = parseCSV(text);
+  if (rows.length < 2) throw new Error('CSVにデータがありません');
 
   const header = rows[0].map(normalizeHeader);
 
@@ -94,25 +111,52 @@ async function loadQuestions() {
     exp: header.indexOf('解説')
   };
 
-  questions = rows.slice(1).map(r => ({
-    id: r[idx.id],
-    field: r[idx.field],
-    text: r[idx.q],
-    choices: [r[idx.a1], r[idx.a2], r[idx.a3], r[idx.a4]],
-    answer: parseInt(r[idx.ans]),
-    explanation: r[idx.exp] || ""
-  }));
+  // 必須列チェック（解説は任意）
+  const required = ['id','field','q','a1','a2','a3','a4','ans'];
+  for (const k of required) {
+    if (idx[k] === -1) throw new Error(`CSVの列名「${k}」が見つかりません（ヘッダ名を確認）`);
+  }
 
-  showRandomQuestion();
+  questions = rows.slice(1).map(r => ({
+    id: (r[idx.id] ?? '').trim(),
+    field: (r[idx.field] ?? '').trim(),
+    text: (r[idx.q] ?? '').trim(),
+    choices: [
+      (r[idx.a1] ?? '').trim(),
+      (r[idx.a2] ?? '').trim(),
+      (r[idx.a3] ?? '').trim(),
+      (r[idx.a4] ?? '').trim(),
+    ],
+    answer: parseInt((r[idx.ans] ?? '').trim(), 10),
+    explanation: idx.exp === -1 ? "" : ((r[idx.exp] ?? '').trim())
+  })).filter(q =>
+    q.text &&
+    q.choices.every(c => c) &&
+    Number.isInteger(q.answer) &&
+    q.answer >= 1 && q.answer <= 4
+  );
+
+  if (questions.length === 0) throw new Error('有効な問題が0件です（空欄や正解の値を確認）');
+
+  deck = shuffle([...questions]);
+  deckIndex = 0;
+  showNextQuestion();
 }
 
-function showRandomQuestion() {
+function showNextQuestion() {
   locked = false;
   document.getElementById('result').textContent = '';
-  current = questions[Math.floor(Math.random() * questions.length)];
 
-  document.getElementById('field').textContent = current.field;
-  document.getElementById('qid').textContent = current.id;
+  // 1周したら次の周回（その周回内では重複なし）
+  if (deckIndex >= deck.length) {
+    deck = shuffle([...questions]);
+    deckIndex = 0;
+    document.getElementById('result').textContent = '🔄 1周完了！次の周回に入ります';
+  }
+
+  current = deck[deckIndex++];
+  document.getElementById('field').textContent = current.field || '-';
+  document.getElementById('qid').textContent = current.id || '-';
   document.getElementById('question').textContent = current.text;
 
   const choicesDiv = document.getElementById('choices');
@@ -120,8 +164,8 @@ function showRandomQuestion() {
 
   current.choices.forEach((c, i) => {
     const btn = document.createElement('button');
-    btn.textContent = `${i+1}. ${c}`;
-    btn.onclick = () => judge(i+1);
+    btn.textContent = `${i + 1}. ${c}`;
+    btn.onclick = () => judge(i + 1);
     choicesDiv.appendChild(btn);
   });
 }
@@ -129,23 +173,26 @@ function showRandomQuestion() {
 function judge(selected) {
   if (locked) return;
   locked = true;
+
   totalCount++;
   const ok = (selected === current.answer);
   if (ok) correctCount++;
 
-  document.getElementById('ok').textContent = correctCount;
-  document.getElementById('total').textContent = totalCount;
+  document.getElementById('ok').textContent = String(correctCount);
+  document.getElementById('total').textContent = String(totalCount);
+
+  const exp = current.explanation ? `📘 解説：${current.explanation}` : '📘 解説：（未入力）';
 
   document.getElementById('result').innerHTML =
     ok
-      ? `✅ 正解！<br><br>📘 解説：${current.explanation}`
-      : `❌ 不正解（正解は ${current.answer}）<br><br>📘 解説：${current.explanation}`;
+      ? `✅ 正解！<br><br>${exp}`
+      : `❌ 不正解（正解は ${current.answer}）<br><br>${exp}`;
 }
 
-document.getElementById('nextBtn').addEventListener('click', showRandomQuestion);
-document.getElementById('reloadBtn').addEventListener('click', loadQuestions);
+document.getElementById('nextBtn').addEventListener('click', showNextQuestion);
+document.getElementById('reloadBtn').addEventListener('click', () => loadQuestions().catch(e => alert(e.message)));
 
-loadQuestions();
+loadQuestions().catch(e => alert(e.message));
 </script>
 </body>
 </html>
