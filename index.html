@@ -103,6 +103,7 @@ async function loadQuestions() {
     id: header.indexOf('問題ID'),
     field: header.indexOf('分野'),
     q: header.indexOf('問題文'),
+    img: header.indexOf('画像'),
     a1: header.indexOf('選択肢1'),
     a2: header.indexOf('選択肢2'),
     a3: header.indexOf('選択肢3'),
@@ -121,6 +122,7 @@ async function loadQuestions() {
     id: (r[idx.id] ?? '').trim(),
     field: (r[idx.field] ?? '').trim(),
     text: (r[idx.q] ?? '').trim(),
+    image: idx.img === -1 ? "" : (r[idx.img] ?? '').trim(),  // ←追加
     choices: [
       (r[idx.a1] ?? '').trim(),
       (r[idx.a2] ?? '').trim(),
@@ -155,9 +157,26 @@ function showNextQuestion() {
   }
 
   current = deck[deckIndex++];
+
   document.getElementById('field').textContent = current.field || '-';
   document.getElementById('qid').textContent = current.id || '-';
   document.getElementById('question').textContent = current.text;
+
+  // 🔽 ここで画像表示処理
+  let imgArea = document.getElementById('imageArea');
+  if (!imgArea) {
+    imgArea = document.createElement('div');
+    imgArea.id = 'imageArea';
+    imgArea.style.margin = '10px 0';
+    document.getElementById('question').after(imgArea);
+  }
+
+  if (current.image) {
+    imgArea.innerHTML =
+      `<img src="images/${current.image}" style="max-width:100%; border-radius:8px;">`;
+  } else {
+    imgArea.innerHTML = '';
+  }
 
   const choicesDiv = document.getElementById('choices');
   choicesDiv.innerHTML = '';
