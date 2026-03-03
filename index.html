@@ -109,7 +109,8 @@ async function loadQuestions() {
     a3: header.indexOf('選択肢3'),
     a4: header.indexOf('選択肢4'),
     ans: header.indexOf('正解'),
-    exp: header.indexOf('解説')
+    exp: header.indexOf('解説'),
+    expImg: header.indexOf('解説画像')
   };
 
   // 必須列チェック（解説は任意）
@@ -130,7 +131,8 @@ async function loadQuestions() {
       (r[idx.a4] ?? '').trim(),
     ],
     answer: parseInt((r[idx.ans] ?? '').trim(), 10),
-    explanation: idx.exp === -1 ? "" : ((r[idx.exp] ?? '').trim())
+    explanation: idx.exp === -1 ? "" : ((r[idx.exp] ?? '').trim()),
+    explanationImage: idx.expImg === -1 ? "" : (r[idx.expImg] ?? '').trim()
   })).filter(q =>
     q.text &&
     q.choices.every(c => c) &&
@@ -200,12 +202,17 @@ function judge(selected) {
   document.getElementById('ok').textContent = String(correctCount);
   document.getElementById('total').textContent = String(totalCount);
 
-  const exp = current.explanation ? `📘 解説：${current.explanation}` : '📘 解説：（未入力）';
+  const expText = current.explanation ? `📘 解説：${current.explanation}` : '📘 解説：（未入力）';
+
+  const expImgHtml = current.explanationImage
+    ? `<br><br><img src="images/${current.explanationImage}" style="max-width:100%; border-radius:8px;">`
+    : '';
 
   document.getElementById('result').innerHTML =
-    ok
-      ? `✅ 正解！<br><br>${exp}`
-      : `❌ 不正解（正解は ${current.answer}）<br><br>${exp}`;
+    (ok
+      ? `✅ 正解！<br><br>${expText}${expImgHtml}`
+      : `❌ 不正解（正解は ${current.answer}）<br><br>${expText}${expImgHtml}`
+    );
 }
 
 document.getElementById('nextBtn').addEventListener('click', showNextQuestion);
