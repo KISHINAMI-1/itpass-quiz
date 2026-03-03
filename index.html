@@ -164,21 +164,42 @@ function showNextQuestion() {
   document.getElementById('qid').textContent = current.id || '-';
   document.getElementById('question').textContent = current.text;
 
-  // 🔽 ここで画像表示処理
-  let imgArea = document.getElementById('imageArea');
-  if (!imgArea) {
-    imgArea = document.createElement('div');
-    imgArea.id = 'imageArea';
-    imgArea.style.margin = '10px 0';
-    document.getElementById('question').after(imgArea);
-  }
+// 🔽 ここで画像表示処理
+let imgArea = document.getElementById('imageArea');
+if (!imgArea) {
+  imgArea = document.createElement('div');
+  imgArea.id = 'imageArea';
+  imgArea.style.margin = '10px 0';
+  document.getElementById('question').after(imgArea);
+}
 
-  if (current.image) {
-    imgArea.innerHTML =
-      `<img src="images/${current.image}" style="max-width:100%; border-radius:8px;">`;
-  } else {
-    imgArea.innerHTML = '';
-  }
+imgArea.innerHTML = ''; // 毎回リセット
+
+if (current.image) {
+  const imgUrl = `images/${current.image}`;
+
+  // 画像
+  const img = document.createElement('img');
+  img.src = imgUrl;
+  img.style.maxWidth = '100%';
+  img.style.borderRadius = '8px';
+
+  // エラー表示
+  const err = document.createElement('div');
+  err.style.color = 'red';
+  err.style.marginTop = '6px';
+  err.style.display = 'none';
+  err.textContent = `⚠ 画像が見つかりません: ${imgUrl}`;
+
+  img.onerror = () => {
+    img.style.display = 'none';
+    err.style.display = 'block';
+    console.error('Image not found:', imgUrl);
+  };
+
+  imgArea.appendChild(img);
+  imgArea.appendChild(err);
+}
 
   const choicesDiv = document.getElementById('choices');
   choicesDiv.innerHTML = '';
@@ -205,8 +226,13 @@ function judge(selected) {
   const expText = current.explanation ? `📘 解説：${current.explanation}` : '📘 解説：（未入力）';
 
   const expImgHtml = current.explanationImage
-    ? `<br><br><img src="images/${current.explanationImage}" style="max-width:100%; border-radius:8px;">`
-    : '';
+  ? `<br><br>
+     <img src="images/${current.explanationImage}"
+          style="max-width:100%; border-radius:8px;"
+          onerror="this.style.display='none';
+                   this.insertAdjacentHTML('afterend',
+                   '<div style=\'color:red;\'>⚠ 解説画像が見つかりません</div>');">`
+  : '';
 
   document.getElementById('result').innerHTML =
     (ok
