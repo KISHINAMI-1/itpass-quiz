@@ -173,32 +173,40 @@ if (!imgArea) {
   document.getElementById('question').after(imgArea);
 }
 
-imgArea.innerHTML = ''; // 毎回リセット
+imgArea.innerHTML = '';
 
 if (current.image) {
-  const imgUrl = `images/${current.image}`;
+  // 複数画像対応：; , | で区切れる
+  const files = current.image
+    .split(/[;,|]/)
+    .map(s => s.trim())
+    .filter(Boolean);
 
-  // 画像
-  const img = document.createElement('img');
-  img.src = imgUrl;
-  img.style.maxWidth = '100%';
-  img.style.borderRadius = '8px';
+  files.forEach((file) => {
+    const imgUrl = `images/${file}`;
 
-  // エラー表示
-  const err = document.createElement('div');
-  err.style.color = 'red';
-  err.style.marginTop = '6px';
-  err.style.display = 'none';
-  err.textContent = `⚠ 画像が見つかりません: ${imgUrl}`;
+    const img = document.createElement('img');
+    img.src = imgUrl;
+    img.style.maxWidth = '100%';
+    img.style.borderRadius = '8px';
+    img.style.display = 'block';
+    img.style.margin = '8px 0';
 
-  img.onerror = () => {
-    img.style.display = 'none';
-    err.style.display = 'block';
-    console.error('Image not found:', imgUrl);
-  };
+    const err = document.createElement('div');
+    err.style.color = 'red';
+    err.style.margin = '6px 0 10px';
+    err.style.display = 'none';
+    err.textContent = `⚠ 画像が見つかりません: ${imgUrl}`;
 
-  imgArea.appendChild(img);
-  imgArea.appendChild(err);
+    img.onerror = () => {
+      img.style.display = 'none';
+      err.style.display = 'block';
+      console.error('Image not found:', imgUrl);
+    };
+
+    imgArea.appendChild(img);
+    imgArea.appendChild(err);
+  });
 }
 
   const choicesDiv = document.getElementById('choices');
