@@ -22,6 +22,7 @@
       <div>分野: <span id="field">-</span></div>
       <div>ID: <span id="qid">-</span></div>
       <div>正答数: <span id="ok">0</span>/<span id="total">0</span></div>
+      <div>残り時間: <span id="timer">--:--</span></div>
     </div>
 
     <div id="categorySelect" class="row">
@@ -52,6 +53,8 @@ const CSV_PATH = './ITpassport.csv';
 let questions = [];
 let deck = [];
 let deckIndex = 0;
+let timerInterval = null;
+let timeLeft = 0;
 
 let current = null;
 let locked = false;
@@ -101,6 +104,47 @@ function shuffle(arr) {
 
 function normalizeHeader(h) {
   return (h || '').trim();
+}
+
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function stopTimer() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+}
+
+function startTimer(seconds) {
+  stopTimer();
+  timeLeft = seconds;
+  document.getElementById('timer').textContent = formatTime(timeLeft);
+
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    document.getElementById('timer').textContent = formatTime(Math.max(timeLeft, 0));
+
+    if (timeLeft <= 0) {
+      stopTimer();
+      finishMockByTimeUp();
+    }
+  }, 1000);
+}
+
+function finishMockByTimeUp() {
+  stopTimer();
+  currentMode = 'normal';
+  const rate = mockAnswered > 0 ? Math.round((mockCorrect / mockAnswered) * 100) : 0;
+  document.getElementById('question').textContent =
+    `時間終了！ ${mockCorrect} / ${mockAnswered} 問正解（正答率 ${rate}%）`;
+  document.getElementById('choices').innerHTML = '';
+  document.getElementById('result').textContent = '⏰ 模試を終了しました';
+  document.getElementById('field').textContent = '模試モード';
+  document.getElementById('qid').textContent = '-';
 }
 
 function setCategory(category) {
@@ -217,7 +261,7 @@ function startReviewWrongMode() {
   showNextQuestion();
 }
 
-function startMockMode(count = 20) {
+function startMockMode(count = 20, minutes = 24) {
   currentMode = 'mock';
 
   let sourceQuestions;
@@ -243,6 +287,7 @@ function startMockMode(count = 20) {
   mockCorrect = 0;
 
   document.getElementById('result').textContent = `模試モード開始：${mockTotal}問`;
+  startTimer(minutes * 60);
   showNextQuestion();
 }
 
@@ -251,6 +296,8 @@ function returnToNormalMode() {
   mockTotal = 0;
   mockAnswered = 0;
   mockCorrect = 0;
+  stopTimer();
+  document.getElementById('timer').textContent = '--:--';
   setCategory(selectedCategory === '復習モード' ? '全部' : selectedCategory);
 }
 
@@ -261,6 +308,7 @@ function showNextQuestion() {
   // 1周したら次の周回（その周回内では重複なし）
   if (deckIndex >= deck.length) {
   if (currentMode === 'mock') {
+    stopTimer();
     const rate = mockTotal > 0 ? Math.round((mockCorrect / mockTotal) * 100) : 0;
     document.getElementById('question').textContent = `模試終了！ ${mockCorrect} / ${mockTotal} 問正解（正答率 ${rate}%）`;
     document.getElementById('choices').innerHTML = '';
@@ -373,7 +421,7 @@ function judge(selected) {
     document.getElementById('result').innerHTML +=
       `<br><br>📝 模試進捗：${mockAnswered} / ${mockTotal}`;
   }    
-  
+
   // 解説画像エリア
   const expArea = document.getElementById('expImageArea');
   expArea.style.marginTop = '10px';
@@ -420,7 +468,7 @@ document.getElementById('btnManagement').addEventListener('click', () => setCate
 document.getElementById('btnTechnology').addEventListener('click', () => setCategory('テクノロジ系'));
 document.getElementById('btnAll').addEventListener('click', () => setCategory('全部'));
 document.getElementById('btnReviewWrong').addEventListener('click', startReviewWrongMode);
-document.getElementById('btnMock20').addEventListener('click', () => startMockMode(20));
+document.getElementById('btnMock20').addEventListener('click', () => startMockMode(20, 24));
 document.getElementById('btnNormalMode').addEventListener('click', returnToNormalMode);
 
 loadQuestions().catch(e => alert(e.message));
