@@ -14,6 +14,37 @@
     .result { margin-top: 10px; font-weight: 700; }
     .row { display:flex; gap:10px; flex-wrap:wrap; margin-top: 12px; }
     .small { width:auto; padding:10px 12px; }
+    .menu-wrap {
+      position: sticky;
+      top: 8px;
+      z-index: 1000;
+      margin: 10px 0 14px;
+    }
+
+    .menu-toggle {
+      width: auto;
+      min-width: 110px;
+      padding: 10px 14px;
+    }
+
+    .menu-panel {
+      margin-top: 8px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+
+    .menu-panel button {
+      width: 100%;
+    }
+
+    @media (min-width: 768px) {
+      .menu-toggle {
+        min-width: 140px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -34,14 +65,18 @@
       <div>残り時間: <span id="timer">--:--</span></div>
     </div>
 
-    <div id="categorySelect" class="row">
-      <button class="small" id="btnStrategy">ストラテジ系 (0)</button>
-      <button class="small" id="btnManagement">マネジメント系 (0)</button>
-      <button class="small" id="btnTechnology">テクノロジ系 (0)</button>
-      <button class="small" id="btnAll">全部 (0)</button>
-      <button class="small" id="btnReviewWrong">間違えた問題だけ復習</button>
-      <button class="small" id="btnMock20">20問模試</button>
-      <button class="small" id="btnNormalMode">通常モードに戻る</button>
+    <div class="menu-wrap">
+      <button class="small menu-toggle" id="menuToggle">☰ メニュー</button>
+
+      <div id="categorySelect" class="menu-panel" style="display:none;">
+        <button class="small" id="btnStrategy">ストラテジ系 (0)</button>
+        <button class="small" id="btnManagement">マネジメント系 (0)</button>
+        <button class="small" id="btnTechnology">テクノロジ系 (0)</button>
+        <button class="small" id="btnAll">全部 (0)</button>
+        <button class="small" id="btnReviewWrong">間違えた問題だけ復習</button>
+        <button class="small" id="btnMock20">20問模試</button>
+        <button class="small" id="btnNormalMode">通常モードに戻る</button>
+      </div>
     </div>
 
     <div class="q" id="question">CSVを読み込み中…</div>
@@ -58,6 +93,15 @@
 
 <script>
 const CSV_PATH = './ITpassport.csv';
+
+const menuToggle = document.getElementById('menuToggle');
+const categorySelect = document.getElementById('categorySelect');
+
+menuToggle.addEventListener('click', () => {
+  const isOpen = categorySelect.style.display === 'block';
+  categorySelect.style.display = isOpen ? 'none' : 'block';
+  menuToggle.textContent = isOpen ? '☰ メニュー' : '✕ 閉じる';
+});
 
 let questions = [];
 let deck = [];
@@ -76,6 +120,11 @@ let currentMode = 'normal'; // normal / review / mock
 let mockTotal = 0;
 let mockAnswered = 0;
 let mockCorrect = 0;
+
+function closeMenu() {
+  categorySelect.style.display = 'none';
+  menuToggle.textContent = '☰ メニュー';
+}
 
 function parseCSV(text) {
   const rows = [];
@@ -475,15 +524,40 @@ function judge(selected) {
   }
 }
 
-document.getElementById('nextBtn').addEventListener('click', showNextQuestion);
-document.getElementById('reloadBtn').addEventListener('click', () => loadQuestions().catch(e => alert(e.message)));
-document.getElementById('btnStrategy').addEventListener('click', () => setCategory('ストラテジ系'));
-document.getElementById('btnManagement').addEventListener('click', () => setCategory('マネジメント系'));
-document.getElementById('btnTechnology').addEventListener('click', () => setCategory('テクノロジ系'));
-document.getElementById('btnAll').addEventListener('click', () => setCategory('全部'));
-document.getElementById('btnReviewWrong').addEventListener('click', startReviewWrongMode);
-document.getElementById('btnMock20').addEventListener('click', () => startMockMode(20, 24));
-document.getElementById('btnNormalMode').addEventListener('click', returnToNormalMode);
+document.getElementById('btnStrategy').addEventListener('click', () => {
+  setCategory('ストラテジ系');
+  closeMenu();
+});
+
+document.getElementById('btnManagement').addEventListener('click', () => {
+  setCategory('マネジメント系');
+  closeMenu();
+});
+
+document.getElementById('btnTechnology').addEventListener('click', () => {
+  setCategory('テクノロジ系');
+  closeMenu();
+});
+
+document.getElementById('btnAll').addEventListener('click', () => {
+  setCategory('全部');
+  closeMenu();
+});
+
+document.getElementById('btnReviewWrong').addEventListener('click', () => {
+  startReviewWrongMode();
+  closeMenu();
+});
+
+document.getElementById('btnMock20').addEventListener('click', () => {
+  startMockMode(20, 24);
+  closeMenu();
+});
+
+document.getElementById('btnNormalMode').addEventListener('click', () => {
+  returnToNormalMode();
+  closeMenu();
+});
 
 const startScreen = document.getElementById('startScreen');
 const quizScreen = document.getElementById('quizScreen');
