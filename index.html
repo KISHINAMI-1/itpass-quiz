@@ -56,6 +56,47 @@
       width:auto;
       min-width:120px;
     }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    .top-controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      width: 100%;
+    }
+
+    .menu-toggle,
+    .next-inline {
+      margin: 0;
+      width: auto;
+      flex: 0 0 auto;
+    }
+
+    .menu-toggle {
+      min-width: 120px;
+    }
+
+    .next-inline {
+      margin-left: auto;
+      min-width: 140px;
+    }
+
+    .menu-panel {
+      width: 100%;
+    }
+
+    .q,
+    .result {
+      word-break: break-word;
+    }
+
+    img {
+      max-width: 100%;
+      height: auto;
+    }
   </style>
 </head>
 <body>
@@ -77,10 +118,10 @@
     </div>
 
     <div class="menu-wrap">
-      <div class="topbar">
+      <div class="top-controls">
         <button class="small menu-toggle" id="menuToggle">☰ メニュー</button>
-        <button class="small next-top" id="nextBtnTop">次の問題 ➜</button>
-      <div>
+        <button class="small next-inline" id="nextBtn">次の問題 ➜</button>
+      </div>
 
       <div id="categorySelect" class="menu-panel" style="display:none;">
         <button class="small" id="btnStrategy">ストラテジ系 (0)</button>
@@ -100,7 +141,6 @@
     <div class="result" id="result"></div>
 
     <div class="row">
-      <button class="small" id="nextBtn">次の問題</button>
       <button class="small" id="reloadBtn">CSV再読み込み</button>
     </div>
   </div>
@@ -538,7 +578,7 @@ function judge(selected) {
   }
 }
 
-document.getElementById('nextBtnTop').addEventListener('click', showNextQuestion);
+document.getElementById('nextBtn').addEventListener('click', showNextQuestion);
 document.getElementById('reloadBtn').addEventListener('click', () => loadQuestions().catch(e => alert(e.message)));
 
 document.getElementById('btnStrategy').addEventListener('click', () => {
