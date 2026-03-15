@@ -89,7 +89,6 @@
         <button class="small" id="btnAll">全部 (0)</button>
         <button class="small" id="btnReviewWrong">間違えた問題だけ復習</button>
         <button class="small" id="btnMock20">20問模試</button>
-        <button class="small" id="reloadBtn">CSV再読み込み</button>
         <button class="small" id="btnNormalMode">通常モードに戻る</button>
       </div>
     </div>
@@ -100,6 +99,10 @@
 
     <div class="result" id="result"></div>
 
+    <div class="row">
+      <button class="small" id="nextBtn">次の問題</button>
+      <button class="small" id="reloadBtn">CSV再読み込み</button>
+    </div>
   </div>
 
 <script>
@@ -536,11 +539,7 @@ function judge(selected) {
 }
 
 document.getElementById('nextBtnTop').addEventListener('click', showNextQuestion);
-
-document.getElementById('reloadBtn').addEventListener('click', () => {
-  loadQuestions().catch(e => alert(e.message));
-  closeMenu();
-});
+document.getElementById('reloadBtn').addEventListener('click', () => loadQuestions().catch(e => alert(e.message)));
 
 document.getElementById('btnStrategy').addEventListener('click', () => {
   setCategory('ストラテジ系');
