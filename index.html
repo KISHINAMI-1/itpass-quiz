@@ -45,6 +45,17 @@
         min-width: 140px;
       }
     }
+
+    .topbar{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+    }
+
+    .next-top{
+      width:auto;
+      min-width:120px;
+    }
   </style>
 </head>
 <body>
@@ -66,7 +77,10 @@
     </div>
 
     <div class="menu-wrap">
-      <button class="small menu-toggle" id="menuToggle">☰ メニュー</button>
+      <div class="topbar">
+        <button class="small menu-toggle" id="menuToggle">☰ メニュー</button>
+        <button class="small next-top" id="nextBtnTop">次の問題 ➜</button>
+      <div>
 
       <div id="categorySelect" class="menu-panel" style="display:none;">
         <button class="small" id="btnStrategy">ストラテジ系 (0)</button>
@@ -75,6 +89,7 @@
         <button class="small" id="btnAll">全部 (0)</button>
         <button class="small" id="btnReviewWrong">間違えた問題だけ復習</button>
         <button class="small" id="btnMock20">20問模試</button>
+        <button class="small" id="reloadBtn">CSV再読み込み</button>
         <button class="small" id="btnNormalMode">通常モードに戻る</button>
       </div>
     </div>
@@ -85,10 +100,6 @@
 
     <div class="result" id="result"></div>
 
-    <div class="row">
-      <button class="small" id="nextBtn">次の問題</button>
-      <button class="small" id="reloadBtn">CSV再読み込み</button>
-    </div>
   </div>
 
 <script>
@@ -524,8 +535,12 @@ function judge(selected) {
   }
 }
 
-document.getElementById('nextBtn').addEventListener('click', showNextQuestion);
-document.getElementById('reloadBtn').addEventListener('click', () => loadQuestions().catch(e => alert(e.message)));
+document.getElementById('nextBtnTop').addEventListener('click', showNextQuestion);
+
+document.getElementById('reloadBtn').addEventListener('click', () => {
+  loadQuestions().catch(e => alert(e.message));
+  closeMenu();
+});
 
 document.getElementById('btnStrategy').addEventListener('click', () => {
   setCategory('ストラテジ系');
