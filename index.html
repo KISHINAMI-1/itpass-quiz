@@ -497,6 +497,7 @@ function showFullMockResult(timeUp = false) {
 
 function showNextQuestion() {
   locked = false;
+  document.getElementById('result').innerHTML = '';
 
   if (deckIndex >= deck.length) {
     if (currentMode === 'mock') {
@@ -620,8 +621,9 @@ function judge(selected) {
   const body = current.explanation || '解説は未入力です。';
 
   document.getElementById('result').innerHTML = `
+    ${ok ? '✅ 正解！' : `❌ 不正解（正解は ${current.answer}）`}
+    <br><br>
     <div class="explanation-box">
-      <p><span class="marker">${lead}</span></p>
       <div class="explanation-text">${body}</div>
       <div id="expImageArea"></div>
     </div>
@@ -629,7 +631,7 @@ function judge(selected) {
 
   const expArea = document.getElementById('expImageArea');
   expArea.style.marginTop = '10px';
-  
+
   // 解説画像（複数対応：; , |）
   if (current.explanationImage) {
     const files = current.explanationImage
