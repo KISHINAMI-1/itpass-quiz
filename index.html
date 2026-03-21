@@ -97,6 +97,11 @@
       max-width: 100%;
       height: auto;
     }
+
+    .explanation-text {
+      white-space: pre-line;
+      line-height: 1.9;
+    }
   </style>
 </head>
 <body>
@@ -106,6 +111,7 @@
   <div class="row">
     <button id="startStudy">📚 学習モード</button>
     <button id="startMock">📝 模試モード（20問）</button>
+    <button id="startFullMock">🧪 完全試験模擬（100問）</button>
     <button id="startReview">🔁 間違えた問題復習</button>
   </div>
 </div>
@@ -174,6 +180,7 @@ let currentMode = 'normal'; // normal / review / mock
 let mockTotal = 0;
 let mockAnswered = 0;
 let mockCorrect = 0;
+let fullMockResults = [];
 
 function closeMenu() {
   categorySelect.style.display = 'none';
@@ -249,6 +256,12 @@ function startTimer(seconds) {
 
 function finishMockByTimeUp() {
   stopTimer();
+
+  if (currentMode === 'fullMock') {
+    showFullMockResult(true);
+    return;
+  }
+
   currentMode = 'normal';
   const rate = mockAnswered > 0 ? Math.round((mockCorrect / mockAnswered) * 100) : 0;
   document.getElementById('question').textContent =
@@ -404,6 +417,31 @@ function startMockMode(count = 20, minutes = 24) {
   showNextQuestion();
 }
 
+function startFullMockMode(count = 100, minutes = 120) {
+  currentMode = 'fullMock';
+
+  let sourceQuestions = [...questions];
+  if (sourceQuestions.length === 0) {
+    document.getElementById('question').textContent = '模試に使える問題がありません';
+    document.getElementById('choices').innerHTML = '';
+    document.getElementById('result').textContent = '';
+    return;
+  }
+
+  deck = shuffle([...sourceQuestions]).slice(0, Math.min(count, sourceQuestions.length));
+  filteredQuestions = [...deck];
+  deckIndex = 0;
+
+  mockTotal = deck.length;
+  mockAnswered = 0;
+  mockCorrect = 0;
+  fullMockResults = [];
+
+  document.getElementById('result').textContent = `完全模試開始：${mockTotal}問 / ${minutes}分`;
+  startTimer(minutes * 60);
+  showNextQuestion();
+}
+
 function returnToNormalMode() {
   currentMode = 'normal';
   mockTotal = 0;
@@ -418,31 +456,67 @@ function returnToNormalMode() {
   setCategory(selectedCategory === '復習モード' ? '全部' : selectedCategory);
 }
 
+function showFullMockResult(timeUp = false) {
+  stopTimer();
+
+  const rate = mockTotal > 0 ? Math.round((mockCorrect / mockTotal) * 100) : 0;
+
+  document.getElementById('field').textContent = '完全模試';
+  document.getElementById('qid').textContent = '-';
+  document.getElementById('timer').textContent = '--:--';
+  document.getElementById('question').textContent =
+    timeUp ? '⏰ 時間終了：完全模試の結果' : '🏁 完全模試終了';
+
+  document.getElementById('choices').innerHTML = '';
+
+  let html = `
+    <div class="mock-summary">
+      <div><strong>得点:</strong> ${mockCorrect} / ${mockTotal}</div>
+      <div><strong>正答率:</strong> ${rate}%</div>
+    </div>
+  `;
+
+  fullMockResults.forEach((item, index) => {
+    const q = item.question;
+    const lead = item.ok ? '正しい。' : `不正解。正解は ${q.answer} です。`;
+
+    html += `
+      <div class="review-item">
+        <p><strong>第${index + 1}問</strong> [${q.field}] ID:${q.id}</p>
+        <p>${q.text}</p>
+        <div class="explanation-box">
+          <p><span class="marker">${lead}</span> ${q.explanation || '解説は未入力です。'}</p>
+        </div>
+      </div>
+    `;
+  });
+
+  document.getElementById('result').innerHTML = html;
+  currentMode = 'normal';
+}
+
 function showNextQuestion() {
   locked = false;
-  document.getElementById('result').textContent = '';
 
-  // 1周したら次の周回（その周回内では重複なし）
   if (deckIndex >= deck.length) {
-  if (currentMode === 'mock') {
-    stopTimer();
-    const rate = mockTotal > 0 ? Math.round((mockCorrect / mockTotal) * 100) : 0;
-    document.getElementById('question').textContent = `模試終了！ ${mockCorrect} / ${mockTotal} 問正解（正答率 ${rate}%）`;
-    document.getElementById('choices').innerHTML = '';
-    document.getElementById('field').textContent = '模試モード';
-    document.getElementById('qid').textContent = '-';
-    return;
+    if (currentMode === 'mock') {
+      stopTimer();
+      const rate = mockTotal > 0 ? Math.round((mockCorrect / mockTotal) * 100) : 0;
+      document.getElementById('question').textContent =
+        `模試終了！ ${mockCorrect} / ${mockTotal} 問正解（正答率 ${rate}%）`;
+      document.getElementById('choices').innerHTML = '';
+      return;
+    }
+
+    if (currentMode === 'fullMock') {
+      showFullMockResult(false);
+      return;
+    }
+
+    deck = shuffle([...filteredQuestions]);
+    deckIndex = 0;
   }
 
-  deck = shuffle([...filteredQuestions]);
-  deckIndex = 0;
-
-  if (currentMode === 'review') {
-    document.getElementById('result').textContent = '🔄 間違えた問題を1周完了！もう一度復習します';
-  } else {
-    document.getElementById('result').textContent = `🔄 ${selectedCategory} を1周完了！次の周回に入ります`;
-  }
-}
   current = deck[deckIndex++];
 
   document.getElementById('field').textContent = current.field || '-';
@@ -511,38 +585,51 @@ function judge(selected) {
 
   totalCount++;
   const ok = (selected === current.answer);
+
   if (ok) {
     correctCount++;
   } else {
     wrongQuestionIds.add(current.id);
   }
 
-  if (currentMode === 'mock') {
+  if (currentMode === 'mock' || currentMode === 'fullMock') {
     mockAnswered++;
     if (ok) mockCorrect++;
-}
-
+  }
 
   document.getElementById('ok').textContent = String(correctCount);
   document.getElementById('total').textContent = String(totalCount);
 
-  const expText = current.explanation ? `📘 解説：${current.explanation}` : '📘 解説：（未入力）';
+  if (currentMode === 'fullMock') {
+    fullMockResults.push({
+      question: current,
+      selected: selected,
+      ok: ok
+    });
 
-  // まずテキストだけ表示（画像はあとで追加）
-  document.getElementById('result').innerHTML =
-    ok
-      ? `✅ 正解！<br><br>${expText}<div id="expImageArea"></div>`
-      : `❌ 不正解（正解は ${current.answer}）<br><br>${expText}<div id="expImageArea"></div>`;
+    document.getElementById('result').innerHTML =
+      ok
+        ? `✅ 回答を記録しました`
+        : `❌ 回答を記録しました`
 
-  if (currentMode === 'mock') {
-    document.getElementById('result').innerHTML +=
-      `<br><br>📝 模試進捗：${mockAnswered} / ${mockTotal}`;
-  }    
+    document.getElementById('result').innerHTML += `<br><br>🧪 完全模試進捗：${mockAnswered} / ${mockTotal}`;
+    return;
+  }
 
-  // 解説画像エリア
+  const lead = ok ? '正しい。' : `不正解。正解は ${current.answer} です。`;
+  const body = current.explanation || '解説は未入力です。';
+
+  document.getElementById('result').innerHTML = `
+    <div class="explanation-box">
+      <p><span class="marker">${lead}</span></p>
+      <div class="explanation-text">${body}</div>
+      <div id="expImageArea"></div>
+    </div>
+  `;
+
   const expArea = document.getElementById('expImageArea');
   expArea.style.marginTop = '10px';
-
+  
   // 解説画像（複数対応：; , |）
   if (current.explanationImage) {
     const files = current.explanationImage
@@ -577,7 +664,6 @@ function judge(selected) {
     });
   }
 }
-
 document.getElementById('nextBtn').addEventListener('click', showNextQuestion);
 document.getElementById('reloadBtn').addEventListener('click', () => loadQuestions().catch(e => alert(e.message)));
 
@@ -615,6 +701,12 @@ document.getElementById('btnNormalMode').addEventListener('click', () => {
   returnToNormalMode();
   closeMenu();
 });
+
+document.getElementById('startFullMock').onclick = () => {
+  startScreen.style.display = 'none';
+  quizScreen.style.display = 'block';
+  startFullMockMode(100, 120);
+};
 
 const startScreen = document.getElementById('startScreen');
 const quizScreen = document.getElementById('quizScreen');
