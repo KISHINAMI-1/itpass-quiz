@@ -185,12 +185,12 @@
     <p class="intro-sub">Touch / Click to Start</p>
   </div>
 
-  <video id="introVideo" class="intro-video" autoplay muted loop playsinline>
+  <video id="introVideo" class="intro-video" autoplay muted loop playsinline controls>
     <source src="intro.mp4" type="video/mp4">
   </video>
 
   <audio id="introBgm" loop>
-    <source src="ZR2612.WAV" type="audio/wav">
+    <source src="ZR2612.wav" type="audio/wav">
   </audio>
 </div>
 
@@ -877,8 +877,18 @@ function enterStartScreen() {
   }
 }
 
-introScreen.addEventListener('click', () => {
-  enterStartScreen();
+introScreen.addEventListener('click', async () => {
+  try {
+    if (introBgm) {
+      await introBgm.play();
+    }
+  } catch (e) {
+    console.log('BGM autoplay blocked:', e);
+  }
+
+  setTimeout(() => {
+    enterStartScreen();
+  }, 150);
 }, { once: true });
 
 const quizScreen = document.getElementById('quizScreen');
