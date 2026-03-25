@@ -278,7 +278,17 @@ function finishMockByTimeUp() {
   document.getElementById('timer').textContent = '--:--';
 }
 
+function isExamRunning() {
+  return currentMode === 'mock' || currentMode === 'fullMock';
+}
+
 function setCategory(category) {
+  if (isExamRunning()) {
+    alert('模擬試験中は分野変更できません。終了後に変更してください。');
+    closeMenu();
+    return;
+  }
+
   selectedCategory = category;
 
   if (category === '全部') {
@@ -372,6 +382,12 @@ async function loadQuestions() {
 }
 
 function startReviewWrongMode() {
+  if (isExamRunning()) {
+    alert('模擬試験中は復習モードに切り替えできません。');
+    closeMenu();
+    return;
+  }
+
   currentMode = 'review';
 
   filteredQuestions = questions.filter(q => wrongQuestionIds.has(q.id));
@@ -385,6 +401,10 @@ function startReviewWrongMode() {
     document.getElementById('result').textContent = '';
     document.getElementById('field').textContent = '復習モード';
     document.getElementById('qid').textContent = '-';
+
+    let imgArea = document.getElementById('imageArea');
+    if (imgArea) imgArea.innerHTML = '';
+
     return;
   }
 
@@ -498,6 +518,31 @@ function showFullMockResult(timeUp = false) {
 
   document.getElementById('result').innerHTML = html;
   currentMode = 'normal';
+}
+
+function selectMockCategoryAndStart() {
+  const input = prompt(
+    '20問模試の出題範囲を選んでください。\n' +
+    '1: ストラテジ系\n' +
+    '2: マネジメント系\n' +
+    '3: テクノロジ系\n' +
+    '4: 全部',
+    '4'
+  );
+
+  if (input === null) return;
+
+  if (input === '1') {
+    selectedCategory = 'ストラテジ系';
+  } else if (input === '2') {
+    selectedCategory = 'マネジメント系';
+  } else if (input === '3') {
+    selectedCategory = 'テクノロジ系';
+  } else {
+    selectedCategory = '全部';
+  }
+
+  startMockMode(20, 24);
 }
 
 function showNextQuestion() {
@@ -671,6 +716,10 @@ function judge(selected) {
     });
   }
 }
+
+document.getElementById('result').textContent =
+  `模試モード開始：${selectedCategory} / ${mockTotal}問`;
+  
 document.getElementById('nextBtn').addEventListener('click', showNextQuestion);
 document.getElementById('reloadBtn').addEventListener('click', () => loadQuestions().catch(e => alert(e.message)));
 
@@ -700,7 +749,13 @@ document.getElementById('btnReviewWrong').addEventListener('click', () => {
 });
 
 document.getElementById('btnMock20').addEventListener('click', () => {
-  startMockMode(20, 24);
+  if (isExamRunning()) {
+    alert('模擬試験中は新しい20問模試を開始できません。');
+    closeMenu();
+    return;
+  }
+
+  selectMockCategoryAndStart();
   closeMenu();
 });
 
@@ -727,7 +782,7 @@ document.getElementById('startStudy').onclick = () => {
 document.getElementById('startMock').onclick = () => {
   startScreen.style.display = 'none';
   quizScreen.style.display = 'block';
-  startMockMode(20, 24);
+  selectMockCategoryAndStart();
 };
 
 document.getElementById('startReview').onclick = () => {
