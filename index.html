@@ -887,18 +887,11 @@ function enterStartScreen() {
 
 introScreen.addEventListener('click', () => {
   if (introBgm) {
-    introBgm.play().catch((e) => {
-      console.log('BGM再生失敗:', e);
-    });
+    introBgm.currentTime = 0;
+    introBgm.play();
   }
 
-introBgm.addEventListener('error', () => {
-  console.log('音声ファイルの読み込み失敗');
-});
-
-  setTimeout(() => {
-    enterStartScreen();
-  }, 3000);
+  enterStartScreen();
 }, { once: true });
 
 const quizScreen = document.getElementById('quizScreen');
