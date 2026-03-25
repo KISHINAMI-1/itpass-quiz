@@ -261,6 +261,7 @@ function startTimer(seconds) {
 
 function finishMockByTimeUp() {
   stopTimer();
+  clearQuestionImageArea();
 
   if (currentMode === 'fullMock') {
     showFullMockResult(true);
@@ -381,6 +382,11 @@ async function loadQuestions() {
   setCategory('全部');
 }
 
+function clearQuestionImageArea() {
+  const imgArea = document.getElementById('imageArea');
+  if (imgArea) imgArea.innerHTML = '';
+}
+
 function startReviewWrongMode() {
   if (isExamRunning()) {
     alert('模擬試験中は復習モードに切り替えできません。');
@@ -401,9 +407,6 @@ function startReviewWrongMode() {
     document.getElementById('result').textContent = '';
     document.getElementById('field').textContent = '復習モード';
     document.getElementById('qid').textContent = '-';
-
-    let imgArea = document.getElementById('imageArea');
-    if (imgArea) imgArea.innerHTML = '';
 
     return;
   }
@@ -437,7 +440,7 @@ function startMockMode(count = 20, minutes = 24) {
   mockAnswered = 0;
   mockCorrect = 0;
 
- document.getElementById('result').textContent =`模試モード開始：${selectedCategory} / ${mockTotal}問`;
+ document.getElementById('result').textContent = `模試モード開始：${selectedCategory} / ${mockTotal}問`;
   startTimer(minutes * 60);
   showNextQuestion();
 }
@@ -483,7 +486,8 @@ function returnToNormalMode() {
 
 function showFullMockResult(timeUp = false) {
   stopTimer();
-
+  clearQuestionImageArea();
+  
   const rate = mockTotal > 0 ? Math.round((mockCorrect / mockTotal) * 100) : 0;
 
   document.getElementById('field').textContent = '完全模試';
@@ -552,6 +556,8 @@ function showNextQuestion() {
   if (deckIndex >= deck.length) {
     if (currentMode === 'mock') {
       stopTimer();
+      clearQuestionImageArea();
+
       const rate = mockTotal > 0 ? Math.round((mockCorrect / mockTotal) * 100) : 0;
       document.getElementById('question').textContent =
         `模試終了！ ${mockCorrect} / ${mockTotal} 問正解（正答率 ${rate}%）`;
