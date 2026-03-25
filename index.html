@@ -437,7 +437,7 @@ function startMockMode(count = 20, minutes = 24) {
   mockAnswered = 0;
   mockCorrect = 0;
 
-  document.getElementById('result').textContent = `模試モード開始：${mockTotal}問`;
+ document.getElementById('result').textContent =`模試モード開始：${selectedCategory} / ${mockTotal}問`;
   startTimer(minutes * 60);
   showNextQuestion();
 }
@@ -717,9 +717,6 @@ function judge(selected) {
   }
 }
 
-document.getElementById('result').textContent =
-  `模試モード開始：${selectedCategory} / ${mockTotal}問`;
-  
 document.getElementById('nextBtn').addEventListener('click', showNextQuestion);
 document.getElementById('reloadBtn').addEventListener('click', () => loadQuestions().catch(e => alert(e.message)));
 
