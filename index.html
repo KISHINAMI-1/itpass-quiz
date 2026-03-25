@@ -176,6 +176,14 @@
       0%, 100% { opacity: 0.35; }
       50% { opacity: 1; }
     }
+
+    .intro-video {
+      pointer-events: none;
+    }
+
+    .intro-overlay {
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -877,13 +885,11 @@ function enterStartScreen() {
   }
 }
 
-introScreen.addEventListener('click', async () => {
-  try {
-    if (introBgm) {
-      await introBgm.play();
-    }
-  } catch (e) {
-    console.log('BGM autoplay blocked:', e);
+introScreen.addEventListener('click', () => {
+  if (introBgm) {
+    introBgm.play().catch((e) => {
+      console.log('BGM再生失敗:', e);
+    });
   }
 
   setTimeout(() => {
