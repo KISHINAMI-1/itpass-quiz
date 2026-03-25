@@ -198,7 +198,7 @@
   </video>
 
   <audio id="introBgm" loop>
-    <source src="ZR2612.mp3" type="audio/mp3">
+    <source src="ZR2612.mp3" type="audio/mpeg">
   </audio>
 </div>
 
@@ -894,7 +894,7 @@ introScreen.addEventListener('click', () => {
 
   setTimeout(() => {
     enterStartScreen();
-  }, 150);
+  }, 10000);
 }, { once: true });
 
 const quizScreen = document.getElementById('quizScreen');
