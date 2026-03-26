@@ -614,16 +614,31 @@ function showFullMockResult(timeUp = false) {
 }
 
 function selectMockCategoryAndStart() {
-  const input = prompt(
-    '20問模試の出題範囲を選んでください。\n' +
-    '1: ストラテジ系\n' +
-    '2: マネジメント系\n' +
-    '3: テクノロジ系\n' +
-    '4: 全部',
-    '4'
-  );
+  let input;
 
-  if (input === null) return;
+  while (true) {
+    input = prompt(
+      '20問模試の出題範囲を選んでください。\n' +
+      '1: ストラテジ系\n' +
+      '2: マネジメント系\n' +
+      '3: テクノロジ系\n' +
+      '4: 全部',
+      '4'
+    );
+
+    // キャンセルしたら何もしない
+    if (input === null) return;
+
+    // 前後の空白を除去
+    input = input.trim();
+
+    // 1〜4だけ許可
+    if (['1', '2', '3', '4'].includes(input)) {
+      break;
+    }
+
+    alert('1〜4 の数字だけ入力してください。');
+  }
 
   if (input === '1') {
     selectedCategory = 'ストラテジ系';
