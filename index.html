@@ -197,11 +197,6 @@
     <source src="video/intro_fixed.mp4" type="video/mp4">
   </video>
 
-  <audio id="introBgm" loop>
-    <source src="audio/ZR2612.mp3" type="audio/mpeg">
-  </audio>
-</div>
-
   <div id="startScreen" class="card" style="display:none">
   <h2>ITパスポート クイズ</h2>
 
@@ -254,7 +249,6 @@ const CSV_PATH = './ITpassport.csv';
 const menuToggle = document.getElementById('menuToggle');
 const categorySelect = document.getElementById('categorySelect');
 const introScreen = document.getElementById('introScreen');
-const introBgm = document.getElementById('introBgm');
 const introVideo = document.getElementById('introVideo');
 
 menuToggle.addEventListener('click', () => {
@@ -875,22 +869,12 @@ function enterStartScreen() {
   startScreen.style.display = 'block';
   quizScreen.style.display = 'none';
 
-  if (introBgm) {
-    introBgm.pause();
-    introBgm.currentTime = 0;
-  }
-
   if (introVideo) {
     introVideo.pause();
   }
 }
 
 introScreen.addEventListener('click', () => {
-  if (introBgm) {
-    introBgm.currentTime = 0;
-    introBgm.play();
-  }
-
   enterStartScreen();
 }, { once: true });
 
