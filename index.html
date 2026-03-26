@@ -281,6 +281,11 @@ function closeMenu() {
   menuToggle.textContent = '☰ メニュー';
 }
 
+function clearQuestionImageArea() {
+  const imgArea = document.getElementById('imageArea');
+  if (imgArea) imgArea.innerHTML = '';
+}
+
 function parseCSV(text) {
   const rows = [];
   let row = [], cell = '', inQuotes = false;
@@ -471,12 +476,9 @@ async function loadQuestions() {
   setCategory('全部');
 }
 
-function clearQuestionImageArea() {
-  const imgArea = document.getElementById('imageArea');
-  if (imgArea) imgArea.innerHTML = '';
-}
-
 function startReviewWrongMode() {
+  clearQuestionImageArea();
+  
   if (isExamRunning()) {
     alert('模擬試験中は復習モードに切り替えできません。');
     closeMenu();
