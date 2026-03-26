@@ -188,25 +188,25 @@
 </head>
 <body>
   <div id="introScreen" class="intro-screen">
-  <div class="intro-overlay">
-    <h1 class="intro-title">ITパスポート クイズ</h1>
-    <p class="intro-sub">Touch / Click to Start</p>
+    <div class="intro-overlay">
+      <h1 class="intro-title">ITパスポート クイズ</h1>
+      <p class="intro-sub">Touch / Click to Start</p>
+    </div>
+
+    <video id="introVideo" class="intro-video" autoplay muted loop playsinline>
+      <source src="video/intro_fixed.mp4" type="video/mp4">
+    </video>
   </div>
-
-  <video id="introVideo" class="intro-video" autoplay muted loop playsinline>
-    <source src="video/intro_fixed.mp4" type="video/mp4">
-  </video>
-
   <div id="startScreen" class="card" style="display:none">
-  <h2>ITパスポート クイズ</h2>
+    <h2>ITパスポート クイズ</h2>
 
-  <div class="row">
-    <button id="startStudy">📚 学習モード</button>
-    <button id="startMock">📝 模試モード（20問）</button>
-    <button id="startFullMock">🧪 完全試験模擬（100問）</button>
-    <button id="startReview">🔁 間違えた問題復習</button>
+    <div class="row">
+      <button id="startStudy">📚 学習モード</button>
+      <button id="startMock">📝 模試モード（20問）</button>
+      <button id="startFullMock">🧪 完全試験模擬（100問）</button>
+      <button id="startReview">🔁 間違えた問題復習</button>
+    </div>
   </div>
-</div>
   <div class="card" id="quizScreen" style="display:none">
     <div class="meta">
       <div>分野: <span id="field">-</span></div>
